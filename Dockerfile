@@ -1,14 +1,14 @@
-# Use the official OpenJDK 11 image as the base image
-FROM openjdk:11-jdk-slim
+#
+# Build stage
+#
+FROM maven:3.8.5-openjdk-17-slim AS build
+WORKDIR /home/app/
+COPY . /home/app/
+RUN mvn clean package -B --also-make -DskipTests
 
-# Set the working directory to /app
-WORKDIR /app
-
-# Copy the packaged JAR file into the container at /app
-COPY target/eureka-server-0.0.1-SNAPSHOT.jar /app/eureka-server.jar
-
-# Expose port 8761 for the Eureka server
-EXPOSE 8761
-
-# Set the entrypoint to run the JAR file when the container starts
-ENTRYPOINT ["java", "-jar", "eureka-server.jar"]
+#
+# Package stage
+#
+FROM openjdk:17-alpine
+COPY --from=build /home/app/target/app.jar /usr/local/lib/app.jar
+ENTRYPOINT ["java", "-jar","/usr/local/lib/app.jar"]
